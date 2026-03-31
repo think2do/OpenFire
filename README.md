@@ -1,4 +1,4 @@
-# DaiDaiChat - AI 聊天助手 🤖💬
+# OpenFire - AI 聊天助手 🤖💬
 
 <div align="center">
 
@@ -11,7 +11,6 @@
 
 [功能特性](#功能特性) • [技术栈](#技术栈) • [快速开始](#快速开始) • [使用说明](#使用说明) • [项目结构](#项目结构)
 
-<img src="https://via.placeholder.com/800x400/4A90E2/FFFFFF?text=DaiDaiChat+Screenshot" alt="App Screenshot" width="600"/>
 
 </div>
 
@@ -46,7 +45,7 @@
 - Xcode 15.0+
 - iOS 17.0+
 - macOS 14.0+ (用于开发)
-- 有效的 Moonshot AI API Key
+- 有效的 AI API Key
 
 ## 🚀 快速开始
 
@@ -263,11 +262,10 @@ private var conversations: [Conversation]
 
 **呆胶布**
 
-- GitHub: [@你的用户名](https://github.com/你的用户名)
+- GitHub: [@CrazyGoudanli](https://github.com/CrazyGoudanli)
 
 ## 🙏 致谢
 
-- [Moonshot AI](https://www.moonshot.cn/) - 提供强大的 Kimi AI 模型
 - [Apple](https://developer.apple.com/) - SwiftUI 和 SwiftData 框架
 - 所有贡献者和支持者
 
