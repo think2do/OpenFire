@@ -12,11 +12,14 @@ import SwiftData
 struct ChatView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var apiService = KimiAPIService()
+    @ObservedObject private var settings = APISettings.shared
     
     @State var conversation: Conversation
     @State private var messageText = ""
     @State private var isLoading = false
     @State private var showHistory = false
+    @State private var showSettings = false
+    @State private var showModelPicker = false
     @State private var errorMessage: String?
     @State private var shouldScrollToBottom = false
     
@@ -34,16 +37,44 @@ struct ChatView: View {
                 
                 Spacer()
                 
-                Text(conversation.title)
-                    .font(.headline)
-                    .lineLimit(1)
+                VStack(spacing: 2) {
+                    Text(conversation.title)
+                        .font(.headline)
+                        .lineLimit(1)
+                    
+                    // 显示当前选中的模型
+                    if !settings.selectedModel.isEmpty {
+                        Button(action: {
+                            showModelPicker = true
+                        }) {
+                            HStack(spacing: 4) {
+                                Text(settings.selectedModel)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Image(systemName: "chevron.down")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                }
                 
                 Spacer()
                 
-                Button(action: createNewConversation) {
-                    Image(systemName: "square.and.pencil")
-                        .font(.title2)
-                        .foregroundColor(.blue)
+                HStack(spacing: 16) {
+                    Button(action: {
+                        showSettings = true
+                    }) {
+                        Image(systemName: "gear")
+                            .font(.title2)
+                            .foregroundColor(.blue)
+                    }
+                    
+                    Button(action: createNewConversation) {
+                        Image(systemName: "square.and.pencil")
+                            .font(.title2)
+                            .foregroundColor(.blue)
+                    }
                 }
             }
             .padding()
@@ -121,6 +152,27 @@ struct ChatView: View {
         .navigationBarHidden(true)
         .sheet(isPresented: $showHistory) {
             HistoryView(selectedConversation: $conversation)
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
+        }
+        .confirmationDialog("选择模型", isPresented: $showModelPicker) {
+            ForEach(apiService.availableModels, id: \.self) { model in
+                Button(model) {
+                    settings.selectedModel = model
+                }
+            }
+            Button("取消", role: .cancel) { }
+        }
+        .task {
+            // 页面加载时获取模型列表
+            if apiService.availableModels.isEmpty {
+                do {
+                    try await apiService.fetchModels()
+                } catch {
+                    errorMessage = "获取模型列表失败: \(error.localizedDescription)"
+                }
+            }
         }
     }
     

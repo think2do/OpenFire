@@ -34,11 +34,72 @@ struct ChatCompletionResponse: Codable {
     }
 }
 
-/// Kimi API 服务类
+/// 模型列表响应
+struct ModelsResponse: Codable {
+    let data: [ModelInfo]
+    
+    struct ModelInfo: Codable, Identifiable {
+        let id: String
+        let object: String?
+        let created: Int?
+        let ownedBy: String?
+        
+        enum CodingKeys: String, CodingKey {
+            case id
+            case object
+            case created
+            case ownedBy = "owned_by"
+        }
+    }
+}
+
+/// API 服务类
 class KimiAPIService: ObservableObject {
-    private let apiKey = "sk-yh9ELQSSW1psxEVodLamhUFLVXug8OwcW4wGTPOrTS8W6iEF"
-    private let baseURL = "https://api.moonshot.cn/v1"
-    private let model = "kimi-k2.5"
+    private let settings = APISettings.shared
+    @Published var availableModels: [String] = []
+    @Published var isLoadingModels = false
+    
+    private var apiKey: String {
+        settings.apiKey
+    }
+    
+    private var baseURL: String {
+        settings.baseURL
+    }
+    
+    private var model: String {
+        settings.selectedModel.isEmpty ? "gpt-3.5-turbo" : settings.selectedModel
+    }
+    
+    /// 获取可用的模型列表
+    func fetchModels() async throws {
+        isLoadingModels = true
+        defer { isLoadingModels = false }
+        
+        let url = URL(string: "\(baseURL)/models")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            throw APIError.invalidResponse
+        }
+        
+        let modelsResponse = try JSONDecoder().decode(ModelsResponse.self, from: data)
+        
+        await MainActor.run {
+            self.availableModels = modelsResponse.data.map { $0.id }
+            
+            // 如果当前没有选中模型，自动选择第一个
+            if settings.selectedModel.isEmpty && !availableModels.isEmpty {
+                settings.selectedModel = availableModels[0]
+            }
+        }
+    }
     
     /// 发送聊天请求
     func sendMessage(messages: [Message]) async throws -> String {

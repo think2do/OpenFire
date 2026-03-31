@@ -13,16 +13,21 @@ struct ContentView: View {
     @Query(sort: \Conversation.updatedAt, order: .reverse) private var conversations: [Conversation]
     
     @State private var currentConversation: Conversation?
+    @State private var isSetupComplete = APISettings.shared.isConfigured
     
     var body: some View {
         Group {
-            if let conversation = currentConversation {
-                ChatView(conversation: conversation)
+            if isSetupComplete {
+                if let conversation = currentConversation {
+                    ChatView(conversation: conversation)
+                } else {
+                    ProgressView()
+                        .onAppear {
+                            initializeConversation()
+                        }
+                }
             } else {
-                ProgressView()
-                    .onAppear {
-                        initializeConversation()
-                    }
+                SetupView(isSetupComplete: $isSetupComplete)
             }
         }
     }
