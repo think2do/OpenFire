@@ -63,15 +63,16 @@ cd daidaichat
 open daidaichat.xcodeproj
 ```
 
-### 3. 配置 API Key
+### 3. 首次启动配置 API
 
-在 `KimiAPIService.swift` 文件中替换你的 API Key：
+应用首次启动时会进入配置页，支持用户自行输入：
 
-```swift
-private let apiKey = "你的_MOONSHOT_API_KEY"
-```
+- **API Key**：你的服务商密钥
+- **Base URL**：例如 `https://api.openai.com/v1` 或 `https://api.moonshot.cn/v1`
 
-> 💡 **提示**: 你可以在 [Moonshot AI 官网](https://platform.moonshot.cn/) 注册并获取 API Key
+配置保存后，应用会自动请求 `Base URL/models` 获取模型列表，并自动选择首个可用模型（你也可以后续手动切换）。
+
+> 💡 **提示**: 只要服务兼容 OpenAI API 格式（`/chat/completions` + `/models`），即可接入。
 
 ### 4. 配置网络权限
 
@@ -121,9 +122,14 @@ private let apiKey = "你的_MOONSHOT_API_KEY"
 ## 📱 使用说明
 
 ### 开始聊天
-1. 首次打开应用会自动创建一个新对话
+1. 首次打开应用先完成 API 配置（API Key + Base URL）
 2. 在底部输入框输入消息
 3. 点击发送按钮 ✈️
+
+### API 与模型设置
+- **修改配置**: 点击设置页修改 API Key 与 Base URL
+- **模型列表**: 自动拉取模型列表，也可手动点击“刷新模型列表”
+- **切换模型**: 在聊天页模型菜单中选择需要的模型
 
 ### 管理对话
 - **新对话**: 点击右上角 ✏️ 按钮
@@ -199,6 +205,28 @@ Task {
 private var conversations: [Conversation]
 ```
 
+## 🧠 提示词设计
+
+### 提示词思路
+- **角色锁定**：先定义助手身份与能力边界，避免回答风格漂移。
+- **安全约束**：在系统提示词中明确拒答高风险内容，降低违规输出概率。
+- **任务拆分**：将“聊天回复”和“标题生成”拆为两套提示词，减少目标冲突。
+- **输出约束**：对标题生成增加长度和格式限制，保证结果可直接用于 UI 展示。
+
+### 具体提示词
+
+**1) 对话系统提示词（聊天）**
+
+```text
+你是 Kimi，由 Moonshot AI 提供的人工智能助手，你更擅长中文和英文的对话。你会为用户提供安全，有帮助，准确的回答。同时，你会拒绝一切涉及恐怖主义,种族歧视,黄色暴力等问题的回答。Moonshot AI 为专有名词,不可翻译成其他语言。
+```
+
+**2) 标题生成系统提示词（自动命名）**
+
+```text
+你是一个对话标题生成助手。请根据用户的对话内容，生成一个简洁的标题（不超过10个字）。只返回标题文本，不要有其他内容。
+```
+
 ## 🎯 开发计划
 
 - [ ] 流式响应支持
@@ -214,7 +242,6 @@ private var conversations: [Conversation]
 
 ## 🐛 已知问题
 
-- API Key 当前硬编码在代码中（计划添加设置页面）
 - 暂不支持流式响应
 - 仅适配 iPhone 竖屏模式
 
